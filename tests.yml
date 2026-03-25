@@ -1,0 +1,42 @@
+name: Word2Vec Tests
+
+on:
+  push:
+    branches: ["main", "master"]
+  pull_request:
+    branches: ["main", "master"]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11"]
+
+    steps:
+      - name: 📥 Checkout repo
+        uses: actions/checkout@v4
+
+      - name: 🐍 Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: 📦 Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: 🧪 Run tests
+        run: python test_word2vec.py
+
+      - name: 📓 Validate notebook structure
+        run: python -c "
+import json, sys
+with open('word2vec_workshop.ipynb') as f:
+    nb = json.load(f)
+cells = nb['cells']
+assert len(cells) >= 10, f'Expected >= 10 cells, got {len(cells)}'
+code_cells = [c for c in cells if c['cell_type'] == 'code']
+assert len(code_cells) >= 8, f'Expected >= 8 code cells, got {len(code_cells)}'
+print(f'Notebook OK — {len(cells)} cells ({len(code_cells)} code)')
+"
